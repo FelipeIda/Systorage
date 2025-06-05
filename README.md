@@ -4,3 +4,4 @@ O Systorage é um sistema de gerenciamento de estoque desenvolvido em Python, ut
 ![image](https://github.com/user-attachments/assets/56a9edc6-030d-47d4-a3d5-005efa1f04d5)
 
 Acesse a Brench Master para acessar todos os arquivos usados no projeto.
+![Sem título](https://github.com/user-attachments/assets/f993fdbc-01a7-44a1-a2ff-043fb4de51a1)
