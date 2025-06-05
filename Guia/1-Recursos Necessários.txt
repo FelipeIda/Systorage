@@ -1,0 +1,282 @@
+Recursos:
+
+Conector Python-SQL
+CMD - digitar: 
+pip install mysql-connector-python 
+
+MySQL:
+https://dev.mysql.com/get/Downloads/MySQL-9.3/mysql-9.3.0-winx64.msi
+
+Dbeaver:
+https://dbeaver.io/files/dbeaver-ce-latest-x86_64-setup.exe
+
+Python:
+https://www.python.org/ftp/python/3.13.4/python-3.13.4-amd64.exe
+
+Códigos:
+____________________________________________________________________________________________________________
+	SQL:
+
+CREATE TABLE estoque (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    categoria VARCHAR(255) NOT NULL,
+    quantidade INT NOT NULL,
+    preco_unitario DECIMAL(10,2) NOT NULL
+);
+
+
+____________________________________________________________________________________________________________
+	Python:    #APENAS PARA OBSERVAÇÂO EM CASO DE ERROS OU PENDENCIAS, O ARQUIVO .PY JÁ POSSUI O CÓDIGO COMPLETO
+
+import tkinter as tk
+from tkinter import ttk, messagebox
+from conexao import Conexao
+
+def exibir_mensagem(mensagem, tipo="info"):
+    if tipo == "info":
+        messagebox.showinfo("Informação", mensagem)
+    elif tipo == "aviso":
+        messagebox.showwarning("Aviso", mensagem)
+    elif tipo == "erro":
+        messagebox.showerror("Erro", mensagem)
+
+def validar_campos():
+    if not all([entry_nome.get(), entry_categoria.get(), entry_quantidade.get(), entry_preco.get()]):
+        return False
+    try:
+        int(entry_quantidade.get())
+        float(entry_preco.get())
+    except ValueError:
+        return False
+    return True
+
+def limpar_campos():
+    entry_busca_id.delete(0, tk.END)
+    entry_nome.delete(0, tk.END)
+    entry_categoria.delete(0, tk.END)
+    entry_quantidade.delete(0, tk.END)
+    entry_preco.delete(0, tk.END)
+
+def buscar_produto():
+    termo = entry_nome.get().strip()
+    if not termo:
+        exibir_mensagem("Digite um Nome para buscar.", "aviso")
+        return
+    conexao = Conexao()
+    try:
+        sql = "SELECT id, nome, categoria, quantidade, preco_unitario FROM estoque WHERE nome LIKE %s"
+        params = (f"%{termo}%",)
+        resultados = conexao.consultar_tree(sql, params)
+        for row in treeview.get_children():
+            treeview.delete(row)
+        if resultados:
+            for prod in resultados:
+                treeview.insert("", "end", values=prod)
+        else:
+            exibir_mensagem("Nenhum produto encontrado.", "aviso")
+    except Exception as e:
+        exibir_mensagem(f"Erro na busca: {e}", "erro")
+    finally:
+        conexao.fechar()
+
+def buscar_produto_por_id():
+    termo = entry_busca_id.get().strip()
+    if not termo:
+        exibir_mensagem("Digite um ID para buscar.", "aviso")
+        return
+    if not termo.isdigit():
+        exibir_mensagem("O ID deve ser um número inteiro.", "aviso")
+        return
+    conexao = Conexao()
+    try:
+        sql = "SELECT id, nome, categoria, quantidade, preco_unitario FROM estoque WHERE id = %s"
+        params = (int(termo),)
+        resultados = conexao.consultar_tree(sql, params)
+        for row in treeview.get_children():
+            treeview.delete(row)
+        if resultados:
+            for prod in resultados:
+                treeview.insert("", "end", values=prod)
+        else:
+            exibir_mensagem("Nenhum produto encontrado com este ID.", "aviso")
+    except Exception as e:
+        exibir_mensagem(f"Erro na busca por ID: {e}", "erro")
+    finally:
+        conexao.fechar()
+
+def resetar_ids():
+    conexao = Conexao()
+    try:
+        cursor = conexao.db.cursor()
+        cursor.execute("SET @count = 0;")
+        cursor.execute("UPDATE estoque SET id = (@count := @count + 1) ORDER BY id;")
+        cursor.execute("ALTER TABLE estoque AUTO_INCREMENT = 1;")
+        conexao.db.commit()
+    except Exception as e:
+        exibir_mensagem(f"Erro ao resetar IDs: {e}", "erro")
+    finally:
+        conexao.fechar()
+
+def salvar_produto():
+    if not validar_campos():
+        exibir_mensagem("Todos os campos são obrigatórios!\nQuantidade deve ser um número inteiro.\nPreço deve ser um número válido.", "aviso")
+        return
+    nome = entry_nome.get()
+    categoria = entry_categoria.get()
+    quantidade = int(entry_quantidade.get())
+    preco = float(entry_preco.get())
+    conexao = Conexao()
+    sql = """
+        INSERT INTO estoque (nome, categoria, quantidade, preco_unitario)
+        VALUES (%s, %s, %s, %s)
+    """
+    params = (nome, categoria, quantidade, preco)
+    if conexao.gravar(sql, params):
+        exibir_mensagem("Produto cadastrado com sucesso!")
+        carregar_produtos()
+        limpar_campos()
+    else:
+        exibir_mensagem("Falha ao cadastrar produto.", "erro")
+    conexao.fechar()
+
+def carregar_produtos():
+    for row in treeview.get_children():
+        treeview.delete(row)
+    conexao = Conexao()
+    sql = "SELECT id, nome, categoria, quantidade, preco_unitario FROM estoque ORDER BY id ASC"
+    produtos = conexao.consultar_tree(sql)
+    conexao.fechar()
+    for prod in produtos:
+        treeview.insert("", "end", values=prod)
+
+def duplo_click(event):
+    selected_item = treeview.selection()
+    if not selected_item:
+        return
+    item = treeview.item(selected_item)
+    valores = item['values']
+    entry_nome.delete(0, tk.END)
+    entry_categoria.delete(0, tk.END)
+    entry_quantidade.delete(0, tk.END)
+    entry_preco.delete(0, tk.END)
+    entry_nome.insert(0, valores[1])
+    entry_categoria.insert(0, valores[2])
+    entry_quantidade.insert(0, valores[3])
+    entry_preco.insert(0, valores[4])
+
+def alterar_produto():
+    if not validar_campos():
+        exibir_mensagem("Todos os campos são obrigatórios!", "aviso")
+        return
+    selected_item = treeview.selection()
+    if not selected_item:
+        exibir_mensagem("Selecione um produto na tabela para alterar!", "aviso")
+        return
+    item = treeview.item(selected_item)
+    produto_id = item['values'][0]
+    nome = entry_nome.get()
+    categoria = entry_categoria.get()
+    quantidade = int(entry_quantidade.get())
+    preco = float(entry_preco.get())
+    conexao = Conexao()
+    sql = """
+        UPDATE estoque
+        SET nome = %s, categoria = %s, quantidade = %s, preco_unitario = %s
+        WHERE id = %s
+    """
+    params = (nome, categoria, quantidade, preco, produto_id)
+    if conexao.gravar(sql, params):
+        exibir_mensagem("Produto atualizado com sucesso!")
+        carregar_produtos()
+        limpar_campos()
+    else:
+        exibir_mensagem("Falha ao atualizar produto.", "erro")
+    conexao.fechar()
+
+def remover_produto():
+    selected_item = treeview.selection()
+    if not selected_item:
+        exibir_mensagem("Selecione um produto para remover!", "aviso")
+        return
+    item = treeview.item(selected_item)
+    produto_id = item['values'][0]
+    resposta = messagebox.askyesno("Confirmação", "Tem certeza que deseja remover este produto?")
+    if not resposta:
+        return
+    conexao = Conexao()
+    sql = f"DELETE FROM estoque WHERE id = {produto_id}"
+    if conexao.gravar(sql):
+        exibir_mensagem("Produto removido com sucesso!")
+        resetar_ids()
+        carregar_produtos()
+        limpar_campos()
+    else:
+        exibir_mensagem("Falha ao remover produto.", "erro")
+    conexao.fechar()
+
+def voltar():
+    tela_estoque.destroy()
+
+# Layout
+tela_estoque = tk.Tk()
+tela_estoque.title("Sistema de Gerenciamento de Estoque")
+tela_estoque.state('zoomed')
+tela_estoque['bg'] = "lightblue"
+
+# Busca por ID no lugar do campo ID
+id_frame = tk.Frame(tela_estoque, bg="lightblue")
+id_frame.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+tk.Label(id_frame, text="Buscar por ID:", font=("Arial", 12), bg="lightblue").pack(side="left")
+entry_busca_id = tk.Entry(id_frame, width=10)
+entry_busca_id.pack(side="left", padx=(5, 0))
+tk.Button(id_frame, text="🔍", command=buscar_produto_por_id).pack(side="left", padx=5)
+
+# Nome + botão de busca
+nome_frame = tk.Frame(tela_estoque, bg="lightblue")
+nome_frame.grid(row=1, column=0, padx=10, pady=(10, 0), sticky="w")
+tk.Label(nome_frame, text="Nome:", font=("Arial", 12), bg="lightblue").pack(side="left")
+entry_nome = tk.Entry(nome_frame, width=25)
+entry_nome.pack(side="left", padx=(5, 0))
+tk.Button(nome_frame, text="🔍", command=buscar_produto).pack(side="left", padx=5)
+
+# Categoria
+tk.Label(tela_estoque, text="Categoria:", font=("Arial", 12), bg="lightblue").grid(row=2, column=0, padx=10, pady=(10, 0), sticky="w")
+entry_categoria = tk.Entry(tela_estoque, width=30)
+entry_categoria.grid(row=3, column=0, padx=10, pady=0, sticky="w")
+
+# Quantidade
+tk.Label(tela_estoque, text="Quantidade:", font=("Arial", 12), bg="lightblue").grid(row=4, column=0, padx=10, pady=(10, 0), sticky="w")
+entry_quantidade = tk.Entry(tela_estoque, width=30)
+entry_quantidade.grid(row=5, column=0, padx=10, pady=0, sticky="w")
+
+# Preço
+tk.Label(tela_estoque, text="Preço Unitário:", font=("Arial", 12), bg="lightblue").grid(row=6, column=0, padx=10, pady=(10, 0), sticky="w")
+entry_preco = tk.Entry(tela_estoque, width=30)
+entry_preco.grid(row=7, column=0, padx=10, pady=0, sticky="w")
+
+# Treeview
+treeview = ttk.Treeview(tela_estoque, columns=("id", "nome", "categoria", "quantidade", "preco"), show="headings")
+for col in ("id", "nome", "categoria", "quantidade", "preco"):
+    treeview.heading(col, text=col.capitalize())
+    treeview.column(col, anchor='center')
+treeview.grid(row=0, column=1, rowspan=10, padx=10, pady=10)
+treeview.bind("<Double-1>", duplo_click)
+
+scrollbar = ttk.Scrollbar(tela_estoque, orient=tk.VERTICAL, command=treeview.yview)
+treeview.configure(yscroll=scrollbar.set)
+scrollbar.grid(row=0, column=2, rowspan=10, sticky='ns', padx=5)
+
+# Botões
+button_frame = tk.Frame(tela_estoque, bg="lightblue")
+button_frame.grid(row=10, column=0, columnspan=2, pady=20)
+
+tk.Button(button_frame, text="Salvar", width=20, height=2, font=("Arial", 12), command=salvar_produto).grid(row=0, column=0, padx=5)
+tk.Button(button_frame, text="Alterar Produto", width=20, height=2, font=("Arial", 12), command=alterar_produto).grid(row=0, column=1, padx=5)
+tk.Button(button_frame, text="Remover Produto", width=20, height=2, font=("Arial", 12), command=remover_produto).grid(row=0, column=2, padx=5)
+
+tk.Button(tela_estoque, text="Voltar", width=15, height=2, bg="gray", font=("Arial", 12), command=voltar).grid(row=11, column=0, columnspan=2, pady=10)
+
+carregar_produtos()
+tela_estoque.mainloop()
+

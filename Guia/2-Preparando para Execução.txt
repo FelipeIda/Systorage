@@ -1,0 +1,14 @@
+Quando estiver baixado todo o necessário siga os PASSOS:
+
+Dbeaver: 
+
+	-Execute o Dbeaver.
+	-Em banco de dados > Nova conexão > MySQL > Avançar > Propriedades do Hardware > Mude a chave allowPublicKeyRetrieval para [True] > Concluir.
+	-Botão Direito do Mouse em Banco de Dados > Criar banco de dados > Coloque o nome do banco de dados de systorage.
+	-Cole o código SQL fornecido no primeiro documento e execute.
+
+Python:
+
+	-Coloque a pasta chamada Systorage no disco rigído do computador (Disco C).
+	-Pressione o botão direito do mouse em Systorage.py > Edit with IDLE > Selecione a versão baixada.
+	-No canto superior para executar o programa Aperte o Run > Run module
