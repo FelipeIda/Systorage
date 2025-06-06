@@ -10,7 +10,7 @@ O Systorage é um sistema de gerenciamento de estoque desenvolvido em Python, ut
 
 <ul>
   <li><a href="https://dev.mysql.com/get/Downloads/MySQL-9.3/mysql-9.3.0-winx64.msi">MySQL</a></li>
-  <li><a href="https://dev.mysql.com/get/Downloads/MySQL-9.3/mysql-9.3.0-winx64.msi">Dbeaver</a></li>
+  <li><a href="https://dbeaver.io/files/dbeaver-ce-latest-x86_64-setup.exe">Dbeaver</a></li>
   <li><a href="https://www.python.org/ftp/python/3.13.4/python-3.13.4-amd64.exe">Python</a></li>
   <li>Tkinter</li>
   <li>MySQL Connector</li>
