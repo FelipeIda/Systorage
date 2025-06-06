@@ -9,9 +9,9 @@ O Systorage é um sistema de gerenciamento de estoque desenvolvido em Python, ut
 ## Ferramentas e tecnologias
 
 <ul>
-  <li>Python<li>
-  <li>Tkinter<li>
-  <li>MySQL Server<li>
-  <li>MySQL Connector<li>
-  <li>Pygame<li>
+  <li>Python
+  <li>Tkinter
+  <li>MySQL Server
+  <li>MySQL Connector
+  <li>Pygame
 <ul>
